@@ -125,6 +125,14 @@ async function run(){
             res.send(result)
         })
 
+        app.get('/catagory/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {catagoryId:id}
+            const result = await productsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
     /////////submited part/////////////
     app.get('/submitted', async(req,res)=>{
         const email = req.query.email;
