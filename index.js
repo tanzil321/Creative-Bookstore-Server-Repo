@@ -32,13 +32,60 @@ async function run(){
         const sellerCollection = client.db('creativeBooks').collection('sellers');
         const buyersCollection = client.db('creativeBooks').collection('buyers');
         const catagoryCollection = client.db('creativeBooks').collection('catagories');
+        const productsCollection = client.db('creativeBooks').collection('products');
 
 
         
         app.get('/bookOptions',async(req,res)=>{
             const query = {};
             const options = await booksCollection.find(query).toArray();
-           
+            res.send(options);
+        })
+
+
+        app.put("/login/:email", async (req, res) => {
+            try {
+                const email = req.params.email;
+
+              
+                const query = { email: email }
+                const existingUser = await usersCollection.findOne(query)
+              
+                if (existingUser) {
+                    const token = jwt.sign(
+                        { email: email },
+                        process.env.ACCESS_TOKEN,
+                        { expiresIn: "1d" }
+                    )
+                    return res.send({ data: token  })
+                }
+                
+                else {
+                      
+                const user = req.body;
+                const filter = { email: email };
+                const options = { upsert: true };
+                const updateDoc = {
+                    $set: user
+                }
+                const result = await usersCollection.updateOne(filter, updateDoc, options);
+
+                // token generate 
+                const token = jwt.sign(
+                    { email: email },
+                    process.env.ACCESS_TOKEN,
+                    { expiresIn: "1d" }
+                )
+               return  res.send({ data: token   })
+
+                }
+
+
+
+            }
+            catch (err) {
+                console.log(err)
+            }
         })
 
         app.get('/bookOptions/:id', async (req, res) => {
@@ -85,12 +132,18 @@ async function run(){
         const bookings = await submittedCollection.find(query).toArray();
         res.send(bookings);
     })
-    app.get("/roles/admin/:email", async (req, res) => {
-        const email = req.params.email;
-        const query = { email: email };
-        const user = await rolesCollection.findOne(query);
-        res.send({ isAdmin: user.role === 'admin' });
-    });
+    // app.get("/roles/admin/:email", async (req, res) => {
+    //     const email = req.params.email;
+    //     const query = { email: email };
+    //     const user = await rolesCollection.findOne(query);
+    //     res.send({ isAdmin: user.role === 'admin' });
+    // });
+    //////////////product//////////
+    app.post('/products', async(req,res)=>{
+        const submit = req.body
+        const result = await productsCollection.insertOne(submit)
+        res.send(result)
+    })
     
 
     app.post('/submitted', async(req,res)=>{
