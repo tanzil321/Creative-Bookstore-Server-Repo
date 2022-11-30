@@ -1,0 +1,14 @@
+[
+    {
+     "catagory_id":"01",
+     "catagory_name":"Books by Stephen King"
+    },
+    {
+     "catagory_id":"02",
+     "catagory_name":"Books by Lee Child"
+    },
+    {
+     "catagory_id":"03",
+     "catagory_name":"Books by Dr. Seuss"
+    }
+]
