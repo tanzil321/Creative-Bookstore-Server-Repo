@@ -138,7 +138,7 @@ async function run(){
         const email = req.query.email;
         const query = {email:email};
         const bookings = await submittedCollection.find(query).toArray();
-        
+        res.send(bookings);
     })
     // app.get("/roles/admin/:email", async (req, res) => {
     //     const email = req.params.email;
