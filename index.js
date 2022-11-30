@@ -38,7 +38,7 @@ async function run(){
         app.get('/bookOptions',async(req,res)=>{
             const query = {};
             const options = await booksCollection.find(query).toArray();
-            res.send(options);
+           
         })
 
         app.get('/bookOptions/:id', async (req, res) => {
