@@ -1,13 +1,13 @@
 const express = require('express');
-require('dotenv').config()
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const jwt = require('jsonwebtoken');
+require('dotenv').config()
 
 const app = express();
 
-const stripe = require("stripe")('pk_test_51M6A7mECS0NgqFM2UCQK5JWKMzkyESQnOIEevlabm8XiB50kEsqfL7Ch0O9npCKFQJhQSX29lbd7W9IUfNASqFLl004UsL20DC')
+const stripe = require("stripe")(process.env.STRIPE_ACCESS_KEY)
 const port = process.env.PORT || 5000;
 
 //middlewares
@@ -39,6 +39,13 @@ async function run(){
         app.get('/bookOptions',async(req,res)=>{
             const query = {};
             const options = await booksCollection.find(query).toArray();
+            res.send(options);
+        })
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+
+            const query = {email:email};
+            const options = await submittedCollection.find(query).toArray();
             res.send(options);
         })
 
@@ -89,6 +96,17 @@ async function run(){
         })
 
 
+      
+
+        app.get('/sellerProducts',async(req,res)=>{
+            const email = req.query.email;
+            const query = {
+               sellerEmail: email
+
+            }
+            const result = await productsCollection.find(query).toArray()
+            res.send(result)
+        })
 
         app.get("/user/admin/:email", async (req, res) => {
             const email = req.params.email;
@@ -116,13 +134,13 @@ async function run(){
         app.get('/bookOptions/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) };
-            const result = await booksCollection.findOne(query);
+            const result = await submittedCollection.findOne(query);
             res.send(result)
         })
         app.delete('/bookOptions/:id',  async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
-            const result = await booksCollection.deleteOne(filter);
+            const result = await productsCollection.deleteOne(filter);
             res.send(result);
         })
         ////////////user part//////////////
@@ -132,6 +150,12 @@ async function run(){
         //     res.send(users);
         // });
         ///user and buyer part
+        app.delete('/users/:id',  async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result);
+        })
         app.get('/roles/seller', async (req, res) => {
             const query = {}
             const cursor = await sellerCollection.find(query).toArray()
@@ -142,7 +166,32 @@ async function run(){
             const cursor = await buyersCollection.find(query).toArray()
             res.send(cursor)
         })
+        app.put('/advertise/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    advertise: 'true'
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updateDoc, option);
 
+            res.send(result)
+        })
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const option = { upsert: true };
+            const updatedoc = {
+                $set: {
+                    status: 'sold',
+                    advertise: 'false',
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updatedoc, option);
+            res.send(result)
+        })
 
         app.get('/catagories',async(req,res)=>{
             const query = {}
@@ -150,6 +199,16 @@ async function run(){
             res.send(result)
         })
 
+        app.get('/products',async(req,res)=>{
+            const query = {}
+            const result = await productsCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.get('/users',async(req,res)=>{
+            const query = {}
+            const result = await usersCollection.find(query).toArray()
+            res.send(result)
+        })
         app.get('/catagory/:id',async(req,res)=>{
             const id = req.params.id;
             const query = {catagoryId:id}
@@ -207,9 +266,11 @@ async function run(){
         res.send(query)
     });
     ///payment part////////////
-    app.post('/create-payment-intent',async(req,res)=>{
+        app.post('/create-payment-intent', async (req, res) => {
+        
         const booking = req.body
-        const price = booking.price
+            const price = booking.price
+            console.log(price)
         const amount = price * 100
         
         const paymentIntent = await stripe.paymentIntents.create({
