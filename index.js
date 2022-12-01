@@ -131,6 +131,23 @@ async function run(){
             res.send({isSeller : user.role === 'user'})
         })
 
+        app.put('/verifyseller', async (req, res) => {
+            const email = req.query.email;
+            const filter = {
+                email: email
+            }
+            const option = { upsert: true }
+            const updateDoc = {
+                $set: {
+                    verifySeller: true,
+                }
+            }
+
+            const result = await usersCollection.updateOne(filter, updateDoc, option)
+            res.send(result)
+
+        })
+
         app.get('/bookOptions/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) };
